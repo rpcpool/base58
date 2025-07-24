@@ -12,8 +12,10 @@ type testValues struct {
 	enc string
 }
 
-var n = 5000000
-var testPairs = make([]testValues, 0, n)
+var (
+	n         = 5000000
+	testPairs = make([]testValues, 0, n)
+)
 
 func init() {
 	// If we do not seed the prng - it will default to a seed of (1)
@@ -99,7 +101,7 @@ func TestFastEqTrivialEncodingAndDecoding(t *testing.T) {
 
 func testEncDecLoop(t *testing.T, alph *Alphabet) {
 	for j := 1; j < 256; j++ {
-		var b = make([]byte, j)
+		b := make([]byte, j)
 		for i := 0; i < 100; i++ {
 			rand.Read(b)
 			fe := FastBase58EncodingAlphabet(b, alph)
@@ -161,5 +163,38 @@ func BenchmarkFastBase58Decoding(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		FastBase58Decoding(testPairs[i].enc)
+	}
+}
+
+func TestAppend(t *testing.T) {
+	initTestPairs()
+	for i := 0; i < len(testPairs); i++ {
+		// Append the encoding to an empty slice.
+		enc := FastBase58Encoding(testPairs[i].dec)
+		dst := make([]byte, 0)
+		dst = Append(dst, testPairs[i].dec)
+		if string(dst) != enc {
+			t.Errorf("Append failed: expected %s, got %s", enc, string(dst))
+		}
+	}
+}
+
+func TestSanityCheck(t *testing.T) {
+	testCases := []string{
+		"ComputeBudget111111111111111111111111111111",
+		"11111111111111111111111111111111",
+		"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+	}
+	// parse then encode again
+	for _, tc := range testCases {
+		dec, err := FastBase58Decoding(tc)
+		if err != nil {
+			t.Errorf("Failed to decode %s: %v", tc, err)
+			continue
+		}
+		enc := FastBase58Encoding(dec)
+		if enc != tc {
+			t.Errorf("Sanity check failed: expected %s, got %s", tc, enc)
+		}
 	}
 }

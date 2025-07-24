@@ -9,6 +9,13 @@ func Encode(bin []byte) string {
 	return FastBase58EncodingAlphabet(bin, BTCAlphabet)
 }
 
+// Append encodes the passed bytes into a base58 encoded byte slice
+// and appends it to the passed destination byte slice.
+// It returns the new byte slice.
+func Append(dst []byte, bin []byte) []byte {
+	return append(dst, _FastBase58EncodingAlphabetBytes(bin, BTCAlphabet)...)
+}
+
 // EncodeAlphabet encodes the passed bytes into a base58 encoded string with the
 // passed alphabet.
 func EncodeAlphabet(bin []byte, alphabet *Alphabet) string {
@@ -23,7 +30,14 @@ func FastBase58Encoding(bin []byte) string {
 // FastBase58EncodingAlphabet encodes the passed bytes into a base58 encoded
 // string with the passed alphabet.
 func FastBase58EncodingAlphabet(bin []byte, alphabet *Alphabet) string {
+	if len(bin) == 0 {
+		return ""
+	}
+	out := _FastBase58EncodingAlphabetBytes(bin, alphabet)
+	return string(out)
+}
 
+func _FastBase58EncodingAlphabetBytes(bin []byte, alphabet *Alphabet) []byte {
 	size := len(bin)
 
 	zcount := 0
@@ -65,7 +79,7 @@ func FastBase58EncodingAlphabet(bin []byte, alphabet *Alphabet) string {
 		out[i] = alphabet.encode[val[i]]
 	}
 
-	return string(out[:size])
+	return out[:size]
 }
 
 // Decode decodes the base58 encoded bytes.
